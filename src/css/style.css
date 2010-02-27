@@ -1,17 +1,17 @@
 
 @import url("reset.css");
- 
+
 /* ====================================================== */
- 
+
 body { position: relative; margin: 0; background: #000; color: #ddd; font-family: "Andale mono", Monaco, Courier; font-size: 15px; }
- 
-body #mask { display: none; }
+
+body .mask { position: absolute; top: 0; left: 0; background: transparent url(../img/bg.png) repeat 0 0; width: 100%; height: 500px; }
+
 .shell ol { display: block; }
 .shell input[type="text"] { }
- 
 
 .shell ol {
-    margin: 1em;
+    margin: 2em;
     padding: 0;
 }
 
@@ -19,7 +19,7 @@ body #mask { display: none; }
     margin-left: -1px;
 }
 
-.shell input[type=text] 
+.shell input[type=text]{
     width: 80%;
 }
 
@@ -47,38 +47,17 @@ body #mask { display: none; }
     display: inline;
 }
 
-/*
+.shell li pre {
+    display: inline;
+    white-space: pre-wrap; /* css-3 */
+    white-space: -moz-pre-wrap; /* Mozilla, since 1999 */
+    white-space: -pre-wrap; /* Opera 4-6 */
+    white-space: -o-pre-wrap; /* Opera 7 */
+    word-wrap: break-word; /* Internet Explorer 5.5+ */
+}
 
-body.insane { background: purple; color: lime; font-family: "comic sans ms"; }
-body.insane #outputter em { color: aqua; }
-body.insane #outputter strong { color: yellow; }
-body.insane #mask { display: none; }
- 
-#mask { position: absolute; top: 0; left: 0; background: transparent url(../img/bg.png) repeat 0 0; width: 100%; height: 500px; }
-.shell input[type=text], #submitter { position: absolute; left: -9999px; }
- 
-#outputter { margin: 1.5em; }
-#outputter li { line-height: 1.6em; /* text-transform: uppercase; */ }
-#outputter li pre {
-display: inline;
-white-space: pre-wrap; / css-3 /
-white-space: -moz-pre-wrap; / Mozilla, since 1999 /
-white-space: -pre-wrap; / Opera 4-6 /
-white-space: -o-pre-wrap; / Opera 7 /
-word-wrap: break-word; / Internet Explorer 5.5+ /
-}
- 
-#outputter span { display: none; }
-#outputter strong { color: #666; }
- 
-@-webkit-keyframes flash {
-from { opacity: 0; }
-50% { opacity: 1; }
-to { opacity: 0; }
-}
-#outputter li em { font-weight: bold; }
-#outputter li em { -webkit-animation-name: flash;-webkit-animation-duration: .76s; -webkit-animation-iteration-count: 1000; }
- 
-span.positive { display: inline; color: #0c0; }
-span.negative { display: inline; color: #c00; }
-*/
+.shell li strong { color: #666; }
+
+.shell li .positive { display: inline; color: #0c0; }
+.shell li .negative { display: inline; color: #c00; }
+
