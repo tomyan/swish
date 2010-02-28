@@ -7,11 +7,10 @@ soda.module({
         var $      = glow.dom.get,
             create = glow.dom.create,
             bind   = glow.events.addListener,
-            unbind = glow.events.removeListener;
+            unbind = glow.events.removeListener,
+            fire   = glow.events.fire;
 
-        var View = function () {
-
-        };
+        var View = function () {};
 
         View.prototype.init = function (to) {
             this.element = create(
@@ -42,12 +41,11 @@ soda.module({
         };
 
         View.prototype.initEventHandlers = function (controller) {
-            bind(this.commandInput, 'keydown', controller.onkeydown, controller);
-            bind(this.commandInput, 'keyup', controller.onkeyup, controller);
+            bind(this.commandInput, 'keydown',  controller.onkeydown,  controller);
+            bind(this.commandInput, 'keyup',    controller.onkeyup,    controller);
             bind(this.commandInput, 'keypress', controller.onkeypress, controller);
-            bind(this.form, 'submit', function () { return false; });
-            var view = this;
-            bind(window, 'focus', function () { view.focusInput(); });
+            bind(this.form,         'submit',   function () { return false; });
+            bind(window,            'focus',    function () { this.focusInput(); }, this);
         };
 
         View.prototype.currentCommand = function () {
@@ -60,6 +58,7 @@ soda.module({
 
         View.prototype.getCommand = function () {
             var command = this.currentCommand();
+            delete this.currentCommandOutput;
             var previous = this.lastCommandListItem = create('<li></li>');
             previous.text(command); 
             this.formListItem.before(previous);
@@ -67,6 +66,15 @@ soda.module({
             // TODO fix this
             window.scrollTo(0, 9999999);
             return command;
+        };
+
+        View.prototype.addCommandOutput = function (output) {
+            if (! this.currentCommandOutput) {
+                this.currentCommandOutput = create('<pre class="output"></pre>');
+                this.currentCommandOutput.appendTo(this.lastCommandListItem);
+            }
+            // TODO optimise this? (appending to innerText works okay in Chrome but not FF)
+            this.currentCommandOutput.text(this.currentCommandOutput.text() + output);
         };
 
         View.prototype.outputError = function (message) {
@@ -81,12 +89,30 @@ soda.module({
             this.focusInput();
         };
 
+        var CommandExecutionContext = function (command, controller, view) {
+            this.command = command;
+            this.controller = controller;
+            this.view = view;
+        };
+
+        CommandExecutionContext.prototype.run = function () {
+            this.command.func.call(this);
+        };
+
+        CommandExecutionContext.prototype.print = function (output) {
+            fire(this, 'output', { 'output' : output });
+        };
+
+        CommandExecutionContext.prototype.say = function (output) {
+            this.print(output + '\n');
+        };
+
         var Command = function (func) {
             this.func = func;
         };
 
-        Command.prototype.run = function (controller) {
-            this.func(controller);
+        Command.prototype.context = function (controller) {
+            return new CommandExecutionContext(this, controller, controller.view);
         };
 
         var Controller = function () {
@@ -102,8 +128,12 @@ soda.module({
 
         var builtins = {};
 
-        builtins.clear = new Command(function (controller) {
-            controller.view.clear();
+        builtins.clear = new Command(function (context) {
+            this.view.clear();
+        });
+
+        builtins.help = new Command(function (context) {
+            this.print('Shell Help');
         });
 
         var keys = {
@@ -171,10 +201,17 @@ soda.module({
                 else {
                     return this.view.outputError(name + ': command not found');
                 }
-                command.run(this, args);
+                var context = command.context(this, args);
+                var listener = bind(context, 'output', this.handleCommandOutput, this);
+                context.run();
+                unbind(listener);
             }
             this.view.focusInput();
             return false;
+        };
+
+        Controller.prototype.handleCommandOutput = function (e) {
+            this.view.addCommandOutput(e.output);
         };
 
         var arrowKeysSendPress = false;

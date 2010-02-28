@@ -48,3 +48,7 @@ body #mask { display: none; }
 .shell .error {
     color: #C33;
 }
+
+.shell .output {
+    color: #3C3;
+}
