@@ -1,15 +1,17 @@
 
 @import url("reset.css");
- 
+
 /* ====================================================== */
- 
-body { position: relative; margin: 0; background: #000; color: #ddd; font-family: "Andale mono", Monaco, Courier; font-size: 100%; }
- 
-body #mask { display: none; }
+
+body { position: relative; margin: 0; background: #000; color: #ddd; font-family: "Andale mono", Monaco, Courier; font-size: 15px; }
+
+body .mask { position: absolute; top: 0; left: 0; bottom: 0; background: transparent url(../img/bg.png) repeat 0 0; width: 100%; }
+
 .shell ol { display: block; }
+.shell input[type="text"] { }
 
 .shell ol {
-    margin: 1em 1em 2em 1em;
+    margin: 2em;
     padding: 0;
 }
 
@@ -60,3 +62,17 @@ body #mask { display: none; }
 .shell .output {
     color: #3C3;
 }
+
+.shell li pre {
+    white-space: pre-wrap; /* css-3 */
+    white-space: -moz-pre-wrap; /* Mozilla, since 1999 */
+    white-space: -pre-wrap; /* Opera 4-6 */
+    white-space: -o-pre-wrap; /* Opera 7 */
+    word-wrap: break-word; /* Internet Explorer 5.5+ */
+}
+
+.shell li strong { color: #666; }
+
+.shell li .positive { display: inline; color: #0c0; }
+.shell li .negative { display: inline; color: #c00; }
+

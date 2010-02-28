@@ -306,6 +306,10 @@ soda.module({
                 keyName   = (e.key || e.chr || '[' + e.keyCode + ']'),
                 keyString = eventType + '=' + modifiers + keyName;
 
+            if (! e.keyCode) {
+                console.log(e);
+            }
+
             if (keyString in keyMapping) {
                 keyString = keyMapping[keyString];
             }
