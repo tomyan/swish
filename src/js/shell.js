@@ -154,33 +154,45 @@ soda.module({
         Controller.prototype.processCommand = function () {
             var plain = this.view.getCommand();
 
-            // TODO history expansion before adding command to history
-            this.history.push(plain);
             this.currentHistory = [];
-            this.currentHistoryPosition = this.history.length;
 
-            var args = this.parseCommand(plain),
-                name = args.shift();
-            if (name == '') return;
-            var command;
-            if (name in builtins) {
-                command = builtins[name];
+            // TODO history expansion before adding command to history
+            if (/\S/.test(plain)) {
+                this.history.push(plain);
+                this.currentHistoryPosition = this.history.length;
+
+                var args = this.parseCommand(plain),
+                    name = args.shift();
+                if (name == '') return;
+                var command;
+                if (name in builtins) {
+                    command = builtins[name];
+                }
+                else {
+                    return this.view.outputError(name + ': command not found');
+                }
+                command.run(this, args);
             }
-            else {
-                return this.view.outputError(name + ': command not found');
-            }
-            command.run(this, args);
             this.view.focusInput();
             return false;
         };
 
+        var arrowKeysSendPress = false;
+
         Controller.prototype.keyStringFromEvent = function (eventType, e) {
             var modifiers = (e.ctrlKey ? 'CTRL+' : ''),
                 keyName = (e.key || e.chr);
+
             // work around for FF (don't really know who is right, but doing it this way around)
             // detect sending of keypress for UP and DOWN and treat as keydown's to match Chrome
+            // ignores the first press, because the first down will have already happened
             if ((keyName == 'UP' || keyName == 'DOWN') && eventType == 'press') {
-                eventType = 'down';
+                if (arrowKeysSendPress) {
+                    eventType = 'down';
+                }
+                else {
+                    arrowKeysSendPress = true;
+                }
             }
 
             // work around Glow/Chrome bug for CTRL+l
