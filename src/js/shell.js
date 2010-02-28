@@ -114,6 +114,8 @@ soda.module({
 
         CommandExecutionContext.prototype.print = function (output) {
             fire(this, 'output', { 'output' : output });
+            // TODO fix this
+            window.scrollTo(0, 9999999);
         };
 
         CommandExecutionContext.prototype.say = function (output) {
@@ -149,19 +151,27 @@ soda.module({
             this.print('Shell Help');
         });
 
+        builtins.history = new Command(function (context) {
+            this.print(this.controller.history.join('\n'));
+        });
+
         var keys = {
-            'press=ENTER'  : 'processCommand',
-            'press=CTRL+l' : 'clearScreen',
-            'press=CTRL+r' : null,
-            'down=CTRL+r'  : 'startSearchBackwards',
-            'up=CTRL+r'    : null,
-            'press=CTRL+s' : null,
-            'down=CTRL+s'  : 'startSearchForwards',
-            'up=CTRL+s'    : null,
-            'down=UP'      : 'previousCommand',
-            'down=DOWN'    : 'nextCommand',
-            'down=TAB'     : 'complete',
-            'press=TAB'    : null
+            'press=ENTER'       : 'processCommand',
+            'press=CTRL+l'      : 'clearScreen',
+            'press=CTRL+r'      : null,
+            'down=CTRL+r'       : 'startSearchBackwards',
+            'up=CTRL+r'         : null,
+            'press=CTRL+s'      : null,
+            'down=CTRL+s'       : 'startSearchForwards',
+            'up=CTRL+s'         : null,
+            'down=UP'           : 'previousCommand',
+            'down=DOWN'         : 'nextCommand',
+            // TODO these are probably highly dependent on British Mac keyboard layout
+            // maybe make them based on keyCode? (they are ALT+< and ALT+>)
+            'press=ALT+SHIFT+¯' : 'firstCommand',
+            'press=ALT+SHIFT+˘' : 'currentCommand',
+            'down=TAB'          : 'complete',
+            'press=TAB'         : null
         };
 
         Controller.prototype.complete = function () {
@@ -187,11 +197,10 @@ soda.module({
             this.view.setSearchForwardsPrompt();
         };
 
-        Controller.prototype.previousCommand = function () {
-            if (this.currentHistoryPosition != 0) {
-                // save the current edits
+        Controller.prototype.goToHistoryItem = function (i) {
+            if (i != this.currentHistoryPosition && i >= 0 && i <= this.history.length) {
                 this.currentHistory[this.currentHistoryPosition] = this.view.currentCommand();
-                this.currentHistoryPosition--;
+                this.currentHistoryPosition = i;
                 this.view.setCurrentCommand(
                     typeof(this.currentHistory[this.currentHistoryPosition]) == 'undefined' ?
                         this.history[this.currentHistoryPosition] :
@@ -201,18 +210,20 @@ soda.module({
             return false;
         };
 
+        Controller.prototype.previousCommand = function () {
+            return this.goToHistoryItem(this.currentHistoryPosition - 1);
+        };
+
         Controller.prototype.nextCommand = function () {
-            if (this.currentHistoryPosition != this.history.length) {
-                // save the current edits
-                this.currentHistory[this.currentHistoryPosition] = this.view.currentCommand();
-                this.currentHistoryPosition++;
-                this.view.setCurrentCommand(
-                    typeof(this.currentHistory[this.currentHistoryPosition]) == 'undefined' ?
-                        this.history[this.currentHistoryPosition] :
-                        this.currentHistory[this.currentHistoryPosition]
-                );
-            }
-            return false;
+            return this.goToHistoryItem(this.currentHistoryPosition + 1);
+        };
+
+        Controller.prototype.firstCommand = function () {
+            return this.goToHistoryItem(0);
+        };
+
+        Controller.prototype.currentCommand = function () {
+            return this.goToHistoryItem(this.history.length);
         };
 
         Controller.prototype.processCommand = function () {
@@ -251,7 +262,9 @@ soda.module({
         var arrowKeysSendPress = false;
 
         Controller.prototype.keyStringFromEvent = function (eventType, e) {
-            var modifiers = (e.ctrlKey ? 'CTRL+' : ''),
+            var modifiers = (e.ctrlKey  ? 'CTRL+' : '')
+                          + (e.altKey   ? 'ALT+' : '')
+                          + (e.shiftKey ? 'SHIFT+' : ''),
                 keyName = (e.key || e.chr);
 
             // work around for FF (don't really know who is right, but doing it this way around)
@@ -292,7 +305,7 @@ soda.module({
         function keyHandler (eventType) {
             return function (e) {
                 var keyString = this.keyStringFromEvent(eventType, e);
-                //console.log('key ' + eventType + ': ' + keyString);
+                console.log('key ' + eventType + ': ' + keyString);
                 if (keyString in keys) {
                     return keys[keyString] ? this[keys[keyString]].call(this) : false;
                 }
