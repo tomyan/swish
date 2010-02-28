@@ -45,22 +45,51 @@ soda.module({
             bind( 'keyup', controller.onkeyup, controller);
             bind(this.commandInput, 'keypress', controller.onkeypress, controller);
             bind(this.form, 'submit', function () { return false; });
+            var focused = false;
+            bind(this.commandInput, 'blur', function () { console.log('blurred'); focused = false; }, this);
             var view = this;
-            window.setInterval(function () { view.commandInput[0].focus(); }, 300);
+            bind(window, 'focus', function () { view.commandInput[0].focus(); });
+/*            window.setInterval(function () {
+                if (! focused) {
+                    view.commandInput[0].focus();
+                    focused = true;
+                }
+            }, 300);
+*/
         };
 
         View.prototype.getCommand = function () {
             var command = this.commandInput.val();
-            var previous = create('<li></li>');
+            var previous = this.lastCommandListItem = create('<li></li>');
             previous.text(command); 
             this.formListItem.before(previous);
             this.commandInput.val('');
             // TODO fix this
             window.scrollTo(0, 9999999);
+            return command;
+        };
+
+        View.prototype.outputError = function (message) {
+            var errorView = create('<pre class="error"></pre>');
+            errorView.text(message);
+            errorView.appendTo(this.lastCommandListItem);
+        };
+
+        View.prototype.clear = function () {
+            this.outputList.html('');
+            this.formListItem.appendTo(this.outputList);
         };
 
         var Model = function () {
 
+        };
+
+        var Command = function (func) {
+            this.func = func;
+        };
+
+        Command.prototype.run = function (controller) {
+            this.func(controller);
         };
 
         var Controller = function () {
@@ -71,12 +100,34 @@ soda.module({
             this.model = new Model();
         };
 
+        var builtins = {};
+
+        builtins.clear = new Command(function (controller) {
+            controller.view.clear();
+        });
+
         var keys = {
-            'ENTER' : 'processCommand'
+            'ENTER' : 'processCommand',
+            'CTRL+l' : 'clearScreen'
+        };
+
+        Controller.prototype.parseCommand = function (command) {
+            // TODO lots
+            return command.split(/\s+/);
         };
 
         Controller.prototype.processCommand = function () {
-            var command = this.view.getCommand();
+            var args = this.parseCommand(this.view.getCommand()),
+                name = args.shift();
+            if (name == '') return;
+            var command;
+            if (name in builtins) {
+                command = builtins[name];
+            }
+            else {
+                return this.view.outputError(name + ': command not found');
+            }
+            command.run(this, args);
         };
 
         Controller.prototype.onkeypress = function (e) {
