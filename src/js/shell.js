@@ -52,6 +52,18 @@ soda.module({
             return this.commandInput.val();
         };
 
+        View.prototype.setSearchBackwardsPrompt = function () {
+            this.formListItem.addClass('search-backwards');
+        };
+
+        View.prototype.setSearchForwardsPrompt = function () {
+            this.formListItem.addClass('search-forwards');
+        };
+
+        View.prototype.resetPrompt = function () {
+            this.formListItem[0].className = '';
+        };
+
         View.prototype.setCurrentCommand = function (command) {
             this.commandInput.val(command);
         };
@@ -59,6 +71,7 @@ soda.module({
         View.prototype.getCommand = function () {
             var command = this.currentCommand();
             delete this.currentCommandOutput;
+            this.resetPrompt();
             var previous = this.lastCommandListItem = create('<li></li>');
             previous.text(command); 
             this.formListItem.before(previous);
@@ -139,6 +152,12 @@ soda.module({
         var keys = {
             'press=ENTER'  : 'processCommand',
             'press=CTRL+l' : 'clearScreen',
+            'press=CTRL+r' : null,
+            'down=CTRL+r'  : 'startSearchBackwards',
+            'up=CTRL+r'    : null,
+            'press=CTRL+s' : null,
+            'down=CTRL+s'  : 'startSearchForwards',
+            'up=CTRL+s'    : null,
             'down=UP'      : 'previousCommand',
             'down=DOWN'    : 'nextCommand'
         };
@@ -151,6 +170,14 @@ soda.module({
         Controller.prototype.clearScreen = function () {
             this.view.clear();
             return false;
+        };
+
+        Controller.prototype.startSearchBackwards = function () {
+            this.view.setSearchBackwardsPrompt();
+        };
+
+        Controller.prototype.startSearchForwards = function () {
+            this.view.setSearchForwardsPrompt();
         };
 
         Controller.prototype.previousCommand = function () {
@@ -237,9 +264,20 @@ soda.module({
                 }
             }
 
-            // work around Glow/Chrome bug for CTRL+l
-            if (! keyName && e.keyCode == 12) {
-                keyName = 'l';
+            if (! keyName) {
+                // work around Glow/Chrome bug for CTRL+l
+                if (e.keyCode == 12) {
+                    keyName = 'l';
+                }
+                // this one stops FF beeping at me when I type CTRL+r
+                if (e.keyCode == 82) {
+                    keyName = 'r';
+                }
+                // for CTRL+s in FF and Chrome
+                if (e.keyCode == 83) {
+                    keyName = 's';
+                }
+                console.log('unknown keyname: ' + e.keyCode);
             }
             return eventType + '=' + modifiers + keyName;
         };
@@ -247,9 +285,9 @@ soda.module({
         function keyHandler (eventType) {
             return function (e) {
                 var keyString = this.keyStringFromEvent(eventType, e);
-                //console.log('key ' + eventType + ': ' + keyString);
-                if (keys[keyString]) {
-                    return this[keys[keyString]].call(this);
+                console.log('key ' + eventType + ': ' + keyString);
+                if (keyString in keys) {
+                    return keys[keyString] ? this[keys[keyString]].call(this) : false;
                 }
             };
         }

@@ -41,6 +41,14 @@ body #mask { display: none; }
     color: #33C;
 }
 
+.shell li.search-backwards:before {
+    content: "reverse-search: ";
+}
+
+.shell li.search-forwards:before {
+    content: "forward-search: ";
+}
+
 .shell form, .shell form p {
     display: inline;
 }
