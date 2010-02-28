@@ -3,7 +3,7 @@
  
 /* ====================================================== */
  
-body { position: relative; margin: 0; background: #000; color: #ddd; font-family: "Andale mono", Monaco, Courier; font-size: 15px; }
+body { position: relative; margin: 0; background: #000; color: #ddd; font-family: "Andale mono", Monaco, Courier; font-size: 100%; }
  
 body #mask { display: none; }
 .shell ol { display: block; }
@@ -29,7 +29,7 @@ body #mask { display: none; }
     border: none;
     color: #bbb;
     font-family: "Andale mono", Monaco, Courier;
-    font-size:15px;
+    font-size: 1em;
 }
 
 .shell input[type=submit] {
