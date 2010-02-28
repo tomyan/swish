@@ -129,8 +129,19 @@ soda.module({
             return false;
         };
 
+        Controller.prototype.keyStringFromEvent = function (e) {
+            var modifiers = (e.ctrlKey ? 'CTRL+' : ''),
+                keyName = (e.key || e.chr);
+            // work around Glow/Chrome bug for CTRL+l
+            if (! keyName && e.keyCode == 12) {
+                keyName = 'l';
+            }
+            return modifiers + keyName;
+        };
+
         Controller.prototype.onkeypress = function (e) {
-            var keyString = (e.ctrlKey ? 'CTRL+' : '') + (e.key || e.chr);
+            var keyString = this.keyStringFromEvent(e);
+            console.log('key pressed: ' + keyString);
             if (keys[keyString]) {
                 return this[keys[keyString]].call(this);
             }
