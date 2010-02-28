@@ -159,7 +159,12 @@ soda.module({
             'down=CTRL+s'  : 'startSearchForwards',
             'up=CTRL+s'    : null,
             'down=UP'      : 'previousCommand',
-            'down=DOWN'    : 'nextCommand'
+            'down=DOWN'    : 'nextCommand',
+            'press=TAB'    : 'complete'
+        };
+
+        Controller.prototype.complete = function () {
+            // TODO
         };
 
         Controller.prototype.parseCommand = function (command) {
@@ -250,7 +255,7 @@ soda.module({
             // work around for FF (don't really know who is right, but doing it this way around)
             // detect sending of keypress for UP and DOWN and treat as keydown's to match Chrome
             // ignores the first press, because the first down will have already happened
-            if (keyName == 'UP' || keyName == 'DOWN') {
+            if (keyName == 'UP' || keyName == 'DOWN' || keyName = 'TAB') {
                 if (eventType == 'press') {
                     if (arrowKeysSendPress) {
                         eventType = 'down';
@@ -277,7 +282,7 @@ soda.module({
                 if (e.keyCode == 83) {
                     keyName = 's';
                 }
-                console.log('unknown keyname: ' + e.keyCode);
+                //console.log('unknown keyname: ' + e.keyCode);
             }
             return eventType + '=' + modifiers + keyName;
         };
