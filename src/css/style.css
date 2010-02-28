@@ -19,14 +19,10 @@ body #mask { display: none; }
 
 .shell input[type=text] {
     width: 80%;
-    position: relative;
-    left: -10000px;
-    width: 80%;
 }
 
 .shell li, .shell input[type=text] {
     line-height: 1.4em;
-    position: static;
     margin: 0;
     padding: 0;
     background: #000;

@@ -38,24 +38,15 @@ soda.module({
         };
 
         View.prototype.focusInput = function () {
-            this.element.get('input')[0].focus();
+            this.commandInput[0].focus();
         };
 
         View.prototype.initEventHandlers = function (controller) {
             bind( 'keyup', controller.onkeyup, controller);
             bind(this.commandInput, 'keypress', controller.onkeypress, controller);
             bind(this.form, 'submit', function () { return false; });
-            var focused = false;
-            bind(this.commandInput, 'blur', function () { console.log('blurred'); focused = false; }, this);
             var view = this;
-            bind(window, 'focus', function () { view.commandInput[0].focus(); });
-/*            window.setInterval(function () {
-                if (! focused) {
-                    view.commandInput[0].focus();
-                    focused = true;
-                }
-            }, 300);
-*/
+            bind(window, 'focus', function () { view.focusInput(); });
         };
 
         View.prototype.getCommand = function () {
@@ -128,6 +119,7 @@ soda.module({
                 return this.view.outputError(name + ': command not found');
             }
             command.run(this, args);
+            this.view.focusInput();
         };
 
         Controller.prototype.onkeypress = function (e) {
