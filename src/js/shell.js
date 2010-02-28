@@ -53,10 +53,12 @@ soda.module({
         };
 
         View.prototype.setSearchBackwardsPrompt = function () {
+            this.resetPrompt();
             this.formListItem.addClass('search-backwards');
         };
 
         View.prototype.setSearchForwardsPrompt = function () {
+            this.resetPrompt();
             this.formListItem.addClass('search-forwards');
         };
 
@@ -168,8 +170,8 @@ soda.module({
         var keys = {
             'press=ENTER'       : 'processCommand',
             'press=CTRL+l'      : 'clearScreen',
-            'press=CTRL+r'      : null,
             'down=CTRL+r'       : 'startSearchBackwards',
+            'press=CTRL+r'      : null,
             'up=CTRL+r'         : null,
             'press=CTRL+s'      : null,
             'down=CTRL+s'       : 'startSearchForwards',
@@ -182,8 +184,8 @@ soda.module({
             'press=ALT+SHIFT+˘' : 'currentCommand',
             'down=TAB'          : 'complete',
             'press=TAB'         : null,
-            'down=CTRL+c'       : 'cancelCommand',
-            'press=CTRL+c'      : null
+            'press=CTRL+c'      : null,
+            'down=CTRL+c'       : 'cancelCommand'
         };
 
         Controller.prototype.complete = function () {
@@ -279,55 +281,46 @@ soda.module({
 
         var arrowKeysSendPress = false;
 
+        // these get replaced after the first keypress is received, so that you don't get the first
+        // keydown event and the first keypress
+        var delayedKeyMapping = {
+            // make firefox pretend to send keydown for certain keypresses, as chrome wont send keypresses
+            'press=CTRL+c' : 'down=CTRL+c',
+            'press=UP'     : 'down=UP',
+            'press=DOWN'   : 'down=DOWN',
+            'press=TAB'    : 'down=TAB'
+        };
+
+        var keyMapping = {
+            // Chrome
+            'press=CTRL+[12]' : 'press=CTRL+l',
+            // FF (is keydown to stop it beeping at me)
+            'down=CTRL+[82]'  : 'down=CTRL+r',
+            'down=CTRL+[83]'  : 'down=CTRL+s'
+         };
+
         Controller.prototype.keyStringFromEvent = function (eventType, e) {
             var modifiers = (e.ctrlKey  ? 'CTRL+' : '')
                           + (e.altKey   ? 'ALT+' : '')
                           + (e.shiftKey ? 'SHIFT+' : ''),
-                keyName = (e.key || e.chr);
+                keyName   = (e.key || e.chr || '[' + e.keyCode + ']'),
+                keyString = eventType + '=' + modifiers + keyName;
 
-            // work around for FF (don't really know who is right, but doing it this way around)
-            // detect sending of keypress for UP and DOWN and treat as keydown's to match Chrome
-            // ignores the first press, because the first down will have already happened
-            if (keyName == 'UP' || keyName == 'DOWN') {
-                if (eventType == 'press') {
-                    if (arrowKeysSendPress) {
-                        eventType = 'down';
-                    }
-                    else {
-                        arrowKeysSendPress = true;
-                    }
-                }
-                else if (eventType == 'down' && arrowKeysSendPress) {
-                    eventType = 'ignore';
-                }
+            if (keyString in keyMapping) {
+                keyString = keyMapping[keyString];
+            }
+            else if (keyString in delayedKeyMapping) {
+                keyMapping[keyString] = delayedKeyMapping[keyString];
+                keyMapping[delayedKeyMapping[keyString]] = null;
             }
 
-            if (! keyName) {
-                // work around Glow/Chrome bug for CTRL+l
-                if (e.keyCode == 12) {
-                    keyName = 'l';
-                }
-                // this one stops FF beeping at me when I type CTRL+r
-                if (e.keyCode == 82) {
-                    keyName = 'r';
-                }
-                // for CTRL+s in FF and Chrome
-                if (e.keyCode == 83) {
-                    keyName = 's';
-                }
-                // for CTRL+c in FF and Chrome
-                if (e.keyCode == 67) {
-                    keyName = 'c';
-                }
-                //console.log('unknown keyname: ' + e.keyCode);
-            }
-            return eventType + '=' + modifiers + keyName;
+            return keyString;
         };
 
         function keyHandler (eventType) {
             return function (e) {
                 var keyString = this.keyStringFromEvent(eventType, e);
-                //console.log('key ' + eventType + ': ' + keyString);
+                console.log('key ' + eventType + ': ' + keyString);
                 if (keyString in keys) {
                     return keys[keyString] ? this[keys[keyString]].call(this) : false;
                 }
