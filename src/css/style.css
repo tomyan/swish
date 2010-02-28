@@ -3,16 +3,29 @@
 
 /* ====================================================== */
 
-body { position: relative; margin: 0; background: #000; color: #ddd; font-family: "Andale mono", Monaco, Courier; font-size: 15px; }
+body {
+    position: relative;
+    margin: 0;
+    background: #000;
+    color: #FFF;
+    font-family: "Andale mono", Monaco, Courier;
+    font-size: 15px;
+}
 
-body .mask { position: absolute; top: 0; left: 0; bottom: 0; background: transparent url(../img/bg.png) repeat 0 0; width: 100%; }
-
-.shell ol { display: block; }
-.shell input[type="text"] { }
+body .mask {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    background: transparent url(../img/bg.png) repeat 0 0;
+    width: 100%;
+}
 
 .shell ol {
+    display: block;
     margin: 2em;
     padding: 0;
+    cursor: text;
 }
 
 .shell li form {
@@ -40,7 +53,7 @@ body .mask { position: absolute; top: 0; left: 0; bottom: 0; background: transpa
 
 .shell li:before {
     content: "> ";
-    color: #33C;
+    color: #33F;
 }
 
 .shell li.search-backwards:before {
@@ -56,11 +69,11 @@ body .mask { position: absolute; top: 0; left: 0; bottom: 0; background: transpa
 }
 
 .shell .error {
-    color: #C33;
+    color: #F33;
 }
 
 .shell .output {
-    color: #3C3;
+    color: #3F3;
 }
 
 .shell li pre {

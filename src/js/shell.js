@@ -25,7 +25,8 @@ soda.module({
                       '</form>' +
                     '</li>' +
                   '</ol>' +
-                  '<div class="mask"></div>' +
+                    // taking mask out for now as it stops text selection
+//                  '<div class="mask"></div>' +
                 '</div>'
             );
             this.element.appendTo(to);
@@ -45,7 +46,25 @@ soda.module({
             bind(this.commandInput, 'keyup',    controller.onkeyup,    controller);
             bind(this.commandInput, 'keypress', controller.onkeypress, controller);
             bind(this.form,         'submit',   function () { return false; });
-            bind(window,            'focus',    function () { this.focusInput(); }, this);
+
+            // TODO get focus to remain in the command input whilst allowing the user
+            // to select, copy and paste other text into the command input
+            // a bit of a challenge...
+
+            bind(
+                window,
+                'focus',
+                function (e) {
+                    if (e.source == e.attachedTo)
+                        this.focusInput();
+                  },
+                 this
+            );
+
+            // these seem to break copy and paste
+            // need a way to do this without it being a huge pain in the arse
+            //bind(window, 'keydown', function () { this.focusInput(); }, this);
+            //bind(window, 'focus',    function () { this.focusInput(); }, this);
         };
 
         View.prototype.currentCommand = function () {
@@ -78,9 +97,13 @@ soda.module({
             previous.text(command); 
             this.formListItem.before(previous);
             this.commandInput.val('');
+            this.scrollToEnd();
+            return command;
+        };
+
+        View.prototype.scrollToEnd = function () {
             // TODO fix this
             window.scrollTo(0, 9999999);
-            return command;
         };
 
         View.prototype.addCommandOutput = function (output) {
@@ -116,8 +139,7 @@ soda.module({
 
         CommandExecutionContext.prototype.print = function (output) {
             fire(this, 'output', { 'output' : output });
-            // TODO fix this
-            window.scrollTo(0, 9999999);
+            this.view.scrollToEnd();
         };
 
         CommandExecutionContext.prototype.say = function (output) {
@@ -264,13 +286,16 @@ soda.module({
                     command = builtins[name];
                 }
                 else {
-                    return this.view.outputError(name + ': command not found');
+                    this.view.outputError(name + ': command not found');
                 }
-                var context = command.context(this);
-                var listener = bind(context, 'output', this.handleCommandOutput, this);
-                context.run(args);
-                unbind(listener);
+                if (command) {
+                    var context = command.context(this);
+                    var listener = bind(context, 'output', this.handleCommandOutput, this);
+                    context.run(args);
+                    unbind(listener);
+                }
             }
+            this.view.scrollToEnd();
             this.view.focusInput();
             return false;
         };
@@ -306,10 +331,6 @@ soda.module({
                 keyName   = (e.key || e.chr || '[' + e.keyCode + ']'),
                 keyString = eventType + '=' + modifiers + keyName;
 
-            if (! e.keyCode) {
-                console.log(e);
-            }
-
             if (keyString in keyMapping) {
                 keyString = keyMapping[keyString];
             }
@@ -324,7 +345,7 @@ soda.module({
         function keyHandler (eventType) {
             return function (e) {
                 var keyString = this.keyStringFromEvent(eventType, e);
-                console.log('key ' + eventType + ': ' + keyString);
+                //console.log('key ' + eventType + ': ' + keyString);
                 if (keyString in keys) {
                     return keys[keyString] ? this[keys[keyString]].call(this) : false;
                 }
