@@ -108,8 +108,8 @@ soda.module({
             this.view = view;
         };
 
-        CommandExecutionContext.prototype.run = function () {
-            this.command.func.call(this);
+        CommandExecutionContext.prototype.run = function (args) {
+            this.command.func.apply(this, args);
         };
 
         CommandExecutionContext.prototype.print = function (output) {
@@ -143,16 +143,26 @@ soda.module({
 
         var builtins = {};
 
-        builtins.clear = new Command(function (context) {
+        builtins.clear = new Command(function () {
             this.view.clear();
         });
 
-        builtins.help = new Command(function (context) {
-            this.print('Shell Help');
+        builtins.help = new Command(function () {
+            this.say('Shell Help\n');
+            this.say('Builtin commands are:');
+            var commands = [];
+            for (var i in builtins) {
+                commands.push(i);
+            }
+            this.print('    ' + commands.sort().join(', '));
         });
 
-        builtins.history = new Command(function (context) {
+        builtins.history = new Command(function () {
             this.print(this.controller.history.join('\n'));
+        });
+
+        builtins.echo = new Command(function () {
+            this.print(Array.prototype.join.call(arguments, ' '));
         });
 
         var keys = {
@@ -171,11 +181,19 @@ soda.module({
             'press=ALT+SHIFT+¯' : 'firstCommand',
             'press=ALT+SHIFT+˘' : 'currentCommand',
             'down=TAB'          : 'complete',
-            'press=TAB'         : null
+            'press=TAB'         : null,
+            'down=CTRL+c'       : 'cancelCommand',
+            'press=CTRL+c'      : null
         };
 
         Controller.prototype.complete = function () {
             // TODO
+            return false;
+        };
+
+        Controller.prototype.cancelCommand = function () {
+            // TODO use this to kill running commands as well
+            this.view.getCommand();
             return false;
         };
 
@@ -246,9 +264,9 @@ soda.module({
                 else {
                     return this.view.outputError(name + ': command not found');
                 }
-                var context = command.context(this, args);
+                var context = command.context(this);
                 var listener = bind(context, 'output', this.handleCommandOutput, this);
-                context.run();
+                context.run(args);
                 unbind(listener);
             }
             this.view.focusInput();
@@ -297,6 +315,10 @@ soda.module({
                 if (e.keyCode == 83) {
                     keyName = 's';
                 }
+                // for CTRL+c in FF and Chrome
+                if (e.keyCode == 67) {
+                    keyName = 'c';
+                }
                 //console.log('unknown keyname: ' + e.keyCode);
             }
             return eventType + '=' + modifiers + keyName;
@@ -305,7 +327,7 @@ soda.module({
         function keyHandler (eventType) {
             return function (e) {
                 var keyString = this.keyStringFromEvent(eventType, e);
-                console.log('key ' + eventType + ': ' + keyString);
+                //console.log('key ' + eventType + ': ' + keyString);
                 if (keyString in keys) {
                     return keys[keyString] ? this[keys[keyString]].call(this) : false;
                 }
