@@ -186,12 +186,17 @@ soda.module({
             // work around for FF (don't really know who is right, but doing it this way around)
             // detect sending of keypress for UP and DOWN and treat as keydown's to match Chrome
             // ignores the first press, because the first down will have already happened
-            if ((keyName == 'UP' || keyName == 'DOWN') && eventType == 'press') {
-                if (arrowKeysSendPress) {
-                    eventType = 'down';
+            if (keyName == 'UP' || keyName == 'DOWN') {
+                if (eventType == 'press') {
+                    if (arrowKeysSendPress) {
+                        eventType = 'down';
+                    }
+                    else {
+                        arrowKeysSendPress = true;
+                    }
                 }
-                else {
-                    arrowKeysSendPress = true;
+                else if (eventType == 'down' && arrowKeysSendPress) {
+                    eventType = 'ignore';
                 }
             }
 
