@@ -69,6 +69,7 @@ soda.module({
         View.prototype.clear = function () {
             this.outputList.html('');
             this.formListItem.appendTo(this.outputList);
+            this.focusInput();
         };
 
         var Model = function () {
@@ -107,6 +108,11 @@ soda.module({
             return command.split(/\s+/);
         };
 
+        Controller.prototype.clearScreen = function () {
+            this.view.clear();
+            return false;
+        };
+
         Controller.prototype.processCommand = function () {
             var args = this.parseCommand(this.view.getCommand()),
                 name = args.shift();
@@ -120,11 +126,13 @@ soda.module({
             }
             command.run(this, args);
             this.view.focusInput();
+            return false;
         };
 
         Controller.prototype.onkeypress = function (e) {
-            if (e.key && keys[e.key]) {
-                this[keys[e.key]].call(this);
+            var keyString = (e.ctrlKey ? 'CTRL+' : '') + (e.key || e.chr);
+            if (keys[keyString]) {
+                return this[keys[keyString]].call(this);
             }
         };
 
