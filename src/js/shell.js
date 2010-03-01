@@ -211,7 +211,6 @@ soda.module({
         };
 
         Controller.prototype.complete = function () {
-            // TODO
             return false;
         };
 
