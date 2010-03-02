@@ -101,6 +101,24 @@ soda.module({
             return command;
         };
 
+        View.prototype.displayCompletions = function (completions) {
+            var command = this.currentCommand();
+            delete this.currentCommandOutput;
+            this.resetPrompt();
+            var previous = this.lastCommandListItem = create('<li></li>');
+            previous.text(command);
+            var completionsList = create('<ul class="completions"></ul>'),
+                completionListItem;
+            completionsList.appendTo(previous);
+            for (var i = 0, l = completions.length; i < l; i++) {
+                completionListItem = create('<li></li>');
+                completionListItem.text(completions[i]);
+                completionListItem.appendTo(completionsList);
+            }
+            this.formListItem.before(previous);
+            this.scrollToEnd();
+        };
+
         View.prototype.scrollToEnd = function () {
             // TODO fix this
             window.scrollTo(0, 9999999);
@@ -210,8 +228,56 @@ soda.module({
             'down=CTRL+c'       : 'cancelCommand'
         };
 
-        Controller.prototype.complete = function () {
-            // TODO
+        function bisect (commands, prefix) {
+            var min = 0,
+                max = commands.length,
+                candidate;
+            while (min < max) {
+                candidate = Math.floor(min + ((max - min) / 2));
+                if (commands[candidate].substr(0, prefix.length) < prefix) {
+                    min = candidate + 1;
+                }
+                else {
+                    max = candidate;
+                }
+            }
+            if ((min < commands.length) && (commands[min].substr(0, prefix.length) == prefix)) {
+                return min;
+            }
+            return -1;
+        }
+
+        // simple binary search based on ordered array of commands
+        // returns array of possibles
+        function completions (commands, prefix) {
+            var first = bisect(commands, prefix),
+                last = first;
+            while (commands[last + 1] && commands[last + 1].indexOf(prefix) == 0) {
+                last++;
+            }
+            return commands.slice(first, last + 1);
+        }
+
+        Controller.prototype.complete = function (counter) {
+
+            var incomplete = this.view.currentCommand();
+            if (! /^\w*$/.test(incomplete)) {
+                return false;
+            }
+            var commands = [];
+            for (var i in builtins) {
+                commands.push(i);
+            }
+            var poss = completions(commands.sort(), incomplete);
+            if (poss.length == 1) {
+                this.view.setCurrentCommand(poss[0] + ' ');
+            }
+            else if (poss.length > 1 && this.tabCompleteCount == (counter - 1)) {
+                this.view.displayCompletions(poss);
+            }
+
+            this.tabCompleteCount = counter;
+            
             return false;
         };
 
@@ -343,11 +409,13 @@ soda.module({
         };
 
         function keyHandler (eventType) {
+            var counter = 0;
             return function (e) {
                 var keyString = this.keyStringFromEvent(eventType, e);
+                counter++;
                 //console.log('key ' + eventType + ': ' + keyString);
                 if (keyString in keys) {
-                    return keys[keyString] ? this[keys[keyString]].call(this) : false;
+                    return keys[keyString] ? this[keys[keyString]].call(this, counter) : false;
                 }
             };
         }

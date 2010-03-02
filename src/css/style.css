@@ -89,3 +89,16 @@ body .mask {
 .shell li .positive { display: inline; color: #0c0; }
 .shell li .negative { display: inline; color: #c00; }
 
+.shell li ul.completions {
+    display: block;
+}
+
+.shell li ul.completions li {
+    display: inline;
+    margin-right: 1em;
+    color: #CC6;
+}
+
+.shell li ul.completions li:before {
+    content: "";
+}
